@@ -6,6 +6,8 @@ var rando = (n) => Math.round(Math.random() * n);
 var unq = (arr) => arr.filter((e, p, a) => a.indexOf(e) == p);
 var delay = (ms) => new Promise(res => setTimeout(res, ms));
 
+var tweetContainer = [];
+
 function getCurrentCards(){
   return Array.from(tn(document,'article')).map(el=> el.parentElement.parentElement);
 }
@@ -15,11 +17,22 @@ function scrollDown(){
   currentCards[currentCards.length-1].scrollIntoView({behavior: "smooth", block: "end", inline: "end"});
 }
 
+function scrollUp(){
+  var currentCards = getCurrentCards();
+  var scroll_middle = Math.round(currentCards.length * .8);
+  currentCards[scroll_middle].scrollIntoView({behavior: "smooth", block: "end", inline: "end"});
+}
+
 async function scrollLooper(){
   for(var i=0; i<50; i++){
     scrollDown();
-    await delay(1111);
+    var tweets = getTweets();
+    tweetContainer.push(tweets);
+    await delay(666);
+//     scrollUp();
+    await delay(555);
   }
+  return true;
 }
 
 function parseTweetDate(s){
@@ -58,8 +71,30 @@ function getTweets(){
       return null;
     }
   }).filter(r=> r);
-console.log(tweets);
+  return tweets;
 }
-// Array.from(tn(document,'time')).map(el=> el.parentElement.parentElement).forEach(card=> parseTweetCard(card))
 
-getTweets()
+function unqTweets(tweets_cont){
+  var containArr = [];
+  for(var i=0; i<tweets_cont.length; i++){
+    if(containArr.every(r=> r.tweet_link != tweets_cont[i].tweet_link)) containArr.push(tweets_cont[i])
+   }
+  return containArr;
+}
+
+async function initApplication(){
+  for(var i = 0; i<5; i++){
+    await scrollLooper();
+    var tweets = getTweets();
+    if( new Date(tweets[tweets.length-1].time).getTime() > (new Date().getTime() - (8.64e+7)) ){
+      await scrollLooper();
+      var tweets = getTweets();
+    }else{
+      console.log(tweets);
+      break;
+    }
+  }
+  var unq_tweets = unqTweets(tweetContainer.flat())
+  console.log(unq_tweets);
+}
+initApplication()
