@@ -28,15 +28,38 @@ function parseTweetDate(s){
   return new Date(`${date} ${time}`);
 }
 
-function parseTweetCard(card){
+function parseTweetCard(card,article){
+  var action = Array.from(tn(article,'span')).filter(sp=> sp.innerText && /retweeted|liked|commented/i.test(sp.innerText));
   var timeElm = tn(card,'time')[0].parentElement;
   var tweeter = tn(card,'a')[0];
+  var display_name = tweeter ? reg(/(.+?)\s*@/.exec(tweeter.textContent),1) : '';
+  var at_name = tweeter ? reg(/@.+/.exec(tweeter.textContent),0) : '';
+  var link = tweeter ? tweeter.href : '';
+  var action = action && action.length ? action[0].parentElement : null;
+  var action_type = action ? reg(/retweeted|liked|commented/i.exec(action.textContent),0) : 'Tweeted';
   var obj = {
-    tweeter: tweeter,
+    action_type: action_type,
+    actor_name:  action ? action.textContent.replace(/\s*(retweeted|liked|commented)\s*/i) : display_name,
+    actor_link: action ? action.href : link, 
+    display_name: display_name,
+    at_name: at_name,
+    orinal_tweeter_link: link,
     time: timeElm.getAttribute('title') ? parseTweetDate(timeElm.getAttribute('title')) : null,
+    tweet_text: article.innerText,
+    tweet_link: timeElm.href,
   };
-  console.log(obj)
+  return obj;
 }
+function getTweets(){
+  var tweets = Array.from(tn(document,'article')).map(article=> {
+    if(tn(article,'time').length){
+      return parseTweetCard(tn(article,'time')[0].parentElement.parentElement,article);
+    }else{
+      return null;
+    }
+  }).filter(r=> r);
+console.log(tweets);
+}
+// Array.from(tn(document,'time')).map(el=> el.parentElement.parentElement).forEach(card=> parseTweetCard(card))
 
-parseTweetCard(Array.from(tn(document,'time')).map(el=> el.parentElement.parentElement)[11])
-
+getTweets()
