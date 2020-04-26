@@ -11,6 +11,15 @@ var ele = (t) => document.createElement(t);
 var attr = (o, k, v) => o.setAttribute(k, v);
 var a = (l, r) => r.forEach(a => attr(l, a[0], a[1]));
 
+function hideads(){
+  Array.from(tn(document,'article')).forEach(el=> {
+    if(Array.from(tn(el,'span')).some(ii=> ii.innerText == 'Promoted')) {
+      var elem = el.parentElement.parentElement.parentElement;
+      elem.style.visibility = 'hidden';
+      elem.style.height = '1px';
+    }
+  });
+}
 var svgs = {
     right_arrow: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 32 32" version="1.1" viewBox="0 0 32 32" xml:space="preserve"><path clip-rule="evenodd" d="M31.7,15.219L16.756,0.275  c-0.202-0.202-0.467-0.301-0.731-0.299c-0.008,0-0.014-0.004-0.022-0.004h-15c-0.552,0-1,0.448-1,1c0,0.008,0.004,0.014,0.004,0.022  C0.006,1.258,0.105,1.523,0.306,1.725l14.246,14.246L0.276,30.247c-0.401,0.401-0.401,1.051,0,1.452  c0.238,0.238,0.561,0.317,0.87,0.273h14.711c0.309,0.044,0.632-0.035,0.87-0.273l14.972-14.972c0.208-0.208,0.303-0.482,0.295-0.755  C32.002,15.701,31.907,15.427,31.7,15.219z M15.551,29.972H3.455l13.244-13.244c0.208-0.208,0.303-0.482,0.295-0.755  c0.008-0.272-0.087-0.546-0.295-0.754L3.453,1.972h12.101l13.999,13.999L15.551,29.972z" fill="#ffffff" fill-rule="evenodd" /><g/><g/><g/><g/><g/><g/></svg>`,
     left_arrow: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" enable-background="new 0 0 32 32" version="1.1" viewBox="0 0 32 32" xml:space="preserve"><path clip-rule="evenodd" d="M0.291,16.749l14.944,14.944  c0.202,0.202,0.467,0.301,0.731,0.299c0.008,0,0.014,0.004,0.022,0.004h15c0.552,0,1-0.448,1-1c0-0.008-0.004-0.014-0.004-0.022  c0.002-0.264-0.097-0.529-0.299-0.731L17.438,15.997L31.715,1.721c0.401-0.401,0.401-1.051,0-1.452  c-0.238-0.238-0.561-0.317-0.87-0.273l-14.711,0c-0.309-0.044-0.632,0.035-0.87,0.273L0.292,15.24  c-0.208,0.208-0.303,0.482-0.295,0.755C-0.011,16.267,0.083,16.541,0.291,16.749z M16.44,1.996h12.096L15.292,15.24  c-0.208,0.208-0.303,0.482-0.295,0.755c-0.008,0.272,0.087,0.546,0.295,0.754l13.247,13.247H16.437L2.438,15.997L16.44,1.996z" fill="#ffffff" fill-rule="evenodd"/><g/><g/><g/><g/><g/><g/></svg>`,
@@ -56,6 +65,7 @@ function parseTweetCard(card,article){
 }
 
 function getTweets(){
+  hideads();
   var tweets = unqTweets(Array.from(tn(document,'article')).map(article=> {
     if(tn(article,'time').length){
       return parseTweetCard(tn(article,'time')[0].parentElement.parentElement,article);
