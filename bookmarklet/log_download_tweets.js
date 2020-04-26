@@ -28,11 +28,6 @@ function getCurrentCards(){
   return Array.from(tn(document,'article')).map(el=> el.parentElement.parentElement);
 }
 
-function parseTweetDate(s){
-  var time = reg(/.+?(AM|PM)(?=\W+)/.exec(s),0);
-  var date = reg(/(AM|PM)\W+\b(.+)/.exec(s),1);
-  return new Date(`${date} ${time}`);
-}
 
 function parseTweetCard(card,article){
   var pathOnly = (s)=> s.replace(/https:\/\/twitter.com\//,'');
@@ -204,13 +199,11 @@ async function animateView(elm,startPosition,reduceAmnt){
   }
   
 
-var dateString = () => new Date().toString().replace(/^\S+/, '').replace(/\d\d:\d\d.+/, '').trim().replace(/(?<=[a-zA-Z]{3})\s\d+/, '');
-
 function downloadTweets(){
   console.log(tweetContainer);
   tweetContainer.sort((a,b)=> a.tweet_timestamp - b.tweet_timestamp);
   tweetContainer.reverse();
-  convertToTSV(tweetContainer,`tweets_${dateString()}.tsv`);
+  convertToTSV(tweetContainer,`tweets_${parseReadableDate(new Date().getTime())}.tsv`);
 }
 
 function convertToTSV(fileArray, named_file) {
@@ -266,5 +259,6 @@ function convertToTSV(fileArray, named_file) {
   console.log(output);
   downloadr(output, named_file);
 }
+
 
 createTwitterHTML()
