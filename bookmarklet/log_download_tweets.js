@@ -38,6 +38,7 @@ function parseTweetCard(card,article){
   var at_name = tweeter ? reg(/@.+/.exec(tweeter.textContent),0) : '';
   var link = tweeter ? tweeter.href : '';
   var action = action && action.length ? action[0].parentElement : null;
+  var imgs = tn(article,'img') && tn(article,'img').length ? Array.from(tn(article,'img')).map(r=> r.getAttribute('src')).filter(r=> r && /twimg.com\/emoji/.test(r) != true) : []; 
   var action_type = action ? reg(/retweeted|liked|commented/i.exec(action.textContent),0) : 'Tweeted';
   var obj = {
     action_type: action_type,
@@ -49,6 +50,7 @@ function parseTweetCard(card,article){
     tweet_date: tn(card,'time')[0] && tn(card,'time')[0].getAttribute('datetime') ? parseReadableDate(tn(card,'time')[0].getAttribute('datetime')) : null,
     tweet_timestamp: tn(card,'time')[0] && tn(card,'time')[0].getAttribute('datetime') ? new Date(tn(card,'time')[0].getAttribute('datetime')).getTime() : null,
     tweet_text: article.innerText,
+    tweet_imgs: imgs,
   };
   return obj;
 }
@@ -145,14 +147,20 @@ function createTwitterHTML(){
   if(gi(document,'twitter_log_container')) gi(document,'twitter_log_container').outerHTML = ''; 
   
   var cont = ele('div');
-  a(cont, [['id', 'twitter_log_container'],['style', `position: fixed; top: 5px; left: 10px; z-index: ${new Date().getTime()}; max-width: 300px; border-radius: 0.22em;`]]);
+  a(cont, [['id', 'twitter_log_container'],['style', `position: fixed; top: 5px; left: 10px; z-index: ${new Date().getTime()}; border-radius: 0.22em; max-width: ${(40+24+160+90+28+15)}px;`]]);
   document.body.appendChild(cont);
 
-  var head = ele('div');
-  a(head, [['style', `border-radius: 0.2em; display: grid; grid-template-columns: 3ch 15ch 15ch 28px; grid-gap: 4px; background: #2e2e2e; color: #f1f1f1; padding 6px;`]]);
+  var head = ele('div'); 
+  a(head, [['style', `border-radius: 0.2em; display: grid; grid-template-columns: 40px 24px 160px 90px 28px; grid-gap: 4px; background: #2e2e2e; color: #f1f1f1; padding 6px;`]]);
   cont.appendChild(head);
   head.onmouseover = dragElement;
-  
+
+  var search = ele('div');
+  a(search,[['class','css-1dbjc4n'],['style',`padding: 4px; cursor: pointer`]]);
+  head.appendChild(search);
+  search.innerHTML = `<svg viewBox="0 0 24 24" class="r-jwli3a r-4qtqp9 r-yyyyoo r-lwhw9o r-dnmrzs r-bnwqim r-1plcrui r-lrvibr"><g><path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"></path></g></svg>`;
+  search.onclick = createSearchHTML;
+
   var count = ele('div');
   a(count,[['id', 'twitter_log_count'],['style',`padding: 4px;`]]);
   head.appendChild(count);
@@ -185,18 +193,19 @@ async function animateView(elm,startPosition,reduceAmnt){
   elm.style.left = `${(startPosition-reduceAmnt)}px`;
 }
 
-  function hideTwitterLogger(){
+function hideTwitterLogger(){
     var gi = (o, s) => o ? o.getElementById(s) : console.log(o);
     var res_cont = gi(document,'twitter_log_container');
     var rect = res_cont.getBoundingClientRect();
     if(Math.sign(rect.left) == 1){
       animateView(res_cont,1,(rect.width-24));
       gi(document,'show_hide_taleo_res_arrow').innerHTML = svgs.right_arrow;
+      if(gi(document,'twitter_search_container')) gi(document,'twitter_search_container').outerHTML = '';
     }else{
       res_cont.style.left = `1px`; 
       gi(document,'show_hide_taleo_res_arrow').innerHTML = svgs.left_arrow;
     }
-  }
+}
   
 
 function downloadTweets(){
@@ -260,5 +269,73 @@ function convertToTSV(fileArray, named_file) {
   downloadr(output, named_file);
 }
 
+function createSearchHTML(){
+  if(gi(document,'twitter_search_container')) gi(document,'twitter_search_container').outerHTML = ''; 
+
+  var cont = this.parentElement.parentElement;
+
+  var cbod = ele('div');
+  a(cbod, [['id','twitter_search_container'],['style', `border-bottom-left-radius: 0.2em; border-bottom-right-radius: 0.2em; padding: 4px; max-width: ${(40+24+160+90+28)}px;`]]);
+  cont.appendChild(cbod);
+  
+  var searchCont = ele('div');
+  cbod.appendChild(searchCont);
+  
+  var searchTweets = ele('input');
+  a(searchTweets,[['placeholder','Search Tweets'],['style',`border: 1px solid #2e2e2e; border-radius: 0.4em; background: #f1f1f1; color: #2e2e2e; padding: 4px; width: 96%;`]]);  
+  searchCont.appendChild(searchTweets);
+  searchTweets.onkeyup = searchUsers;
+
+}
+
+
+function searchUsers(){
+  var regXready2 = (str) => str && typeof str == 'string' ? str.replace(/\[/g,'\\W').replace(/\]/g,'\\W').replace(/\{/g,'\\W').replace(/\}/g,'\\W').replace(/\\/g,'\\W').replace(/\//g,'\\W').replace(/\?/g,'\\W').replace(/\*/g,'.{0,8}') : '';
+  if(this.value.trim().length > 3){
+    var x = new RegExp(regXready2(this.value.trim()), 'i');
+    var matches = tweetContainer.filter(r=>  x.test(r.actor_name) || x.test(r.display_name) || x.test(r.orinal_tweeter_link) || x.test(r.tweet_text));
+    console.log(matches);
+buildSearchResultsHTML(matches);
+  }
+}
+
+function openTweet(){
+  var jdat = JSON.parse(this.getAttribute('jdat'));
+  window.open(jdat.tweet_link);
+}
+
+function buildSearchResultsHTML(results){
+  if(gi(document,'search_results_data')) gi(document,'search_results_data').outerHTML = '';
+  var ref = gi(document,'twitter_search_container');
+  
+  var cbod = ele('div');
+  a(cbod,[['id','search_results_data'],['style',`display: grid; grid-template-rows: auto; grid-gap: 22px; padding: 4px; background: #2e2e2e; overflow-y: auto; max-height: 500px; max-width: 98%;`]]);
+  ref.appendChild(cbod);
+  results.forEach(r=> {
+    var tweetBod = ele('div');
+    a(tweetBod, [['style',`border-bottom: 1px solid #4266f5;`]]);
+    cbod.appendChild(tweetBod);
+
+    var actor = ele('div');
+    a(actor,[['jdat',`${JSON.stringify(r)}`],['style',`font-size: 1.1em; color: #4266f5; cursor: pointer;`]]);
+    actor.innerHTML = `<div style="display: grid; grid-template-columns: 50px 1fr; grid-gap: 6px;"><div><img style="border-radius: 50%; width: 48px; height: 48px;" src="${r.tweet_imgs[0]}"></img></div><div>${r.display_name}</div></div>`;
+    tweetBod.appendChild(actor);
+    actor.onclick = openTweet;
+
+    var text = ele('div');
+    a(text,[['style',`font-size: 0.9em; color: #f1f1f1;`]]);
+    tweetBod.appendChild(text);
+    text.innerText = r.tweet_text; 
+    
+    if(r.tweet_imgs && r.tweet_imgs.length){
+      for(var ii=1; ii<r.tweet_imgs.length; ii++){
+        var img = ele('img');
+        a(img,[['style',`max-width: 300px; max-height: 300px;`]]);
+        a(img,[['src',r.tweet_imgs[ii]]]);
+        tweetBod.appendChild(img);
+      }
+    }
+  });
+}
 
 createTwitterHTML()
