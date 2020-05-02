@@ -49,10 +49,13 @@ function parseTweetCard(card,article){
   var action = action && action.length ? action[0].parentElement : null;
   var imgs = tn(article,'img') && tn(article,'img').length ? Array.from(tn(article,'img')).map(r=> r.getAttribute('src')).filter(r=> r && /twimg.com\/emoji/.test(r) != true) : []; 
   var action_type = action ? reg(/retweeted|liked|commented/i.exec(action.textContent),0) : 'Tweeted';
+  var tweet_links = article.innerHTML.match(/http(s|):\/\/(www.|)\w+\.[a-z]{2,12}\S+/gi) ? article.innerHTML.match(/http(s|):\/\/(www.|)\w+\.[a-z]{2,12}\S+/gi).map(m=> m.replace(/".*|&quot.*/g, '')).filter(ii=> /\.png|twimg\.com|\.jpeg|.jpg/i.test(ii) != true) : [];
+  var actor_link = action ? action.href : link;
+  var actor_name = action ? action.textContent.replace(/\s*(retweeted|liked|commented)\s*/i, '').trim() : display_name;
   var obj = {
     action_type: action_type,
-    actor_name:  action ? action.textContent.replace(/\s*(retweeted|liked|commented)\s*/i, '').trim() : display_name,
-    actor_link: action ? action.href : link, 
+    actor_name:  actor_name,
+    actor_link: actor_link, 
     display_name: display_name,
     orinal_tweeter_link: link,
     tweet_link: timeElm.href,
@@ -60,6 +63,8 @@ function parseTweetCard(card,article){
     tweet_timestamp: tn(card,'time')[0] && tn(card,'time')[0].getAttribute('datetime') ? new Date(tn(card,'time')[0].getAttribute('datetime')).getTime() : null,
     tweet_text: article.innerText,
     tweet_imgs: imgs,
+    tweet_links: tweet_links,
+    links_to_self: tweet_links.filter(ii=> new RegExp(display_name.replace(/.+\//,'')+'|'+actor_link.replace(/.+\//,'')+'|'+actor_name.replace(/.+\//,'')+'|'+link.replace(/.+\//,''), 'i').test(ii))
   };
   return obj;
 }
@@ -305,7 +310,11 @@ function searchUsers(){
     var x = new RegExp(regXready2(this.value.trim()), 'i');
     var matches = tweetContainer.filter(r=>  x.test(r.actor_name) || x.test(r.display_name) || x.test(r.orinal_tweeter_link) || x.test(r.tweet_text));
     console.log(matches);
-buildSearchResultsHTML(matches);
+    buildSearchResultsHTML(matches);
+  }
+  if(this.value.trim().length == 0 ){
+    if(gi(document,'search_results_data')) gi(document,'search_results_data').outerHTML = '';
+
   }
 }
 
