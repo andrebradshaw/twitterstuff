@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "Twitter Saver",
+    "version": "0.111",
+    "description": "Automatically log tweets and save them as a table",
+    "content_scripts": [{
+      "matches": ["https://twitter.com/*"],
+      "js": ["content.js"]
+    }],
+    "permissions": [
+      "storage",
+      "unlimitedStorage"
+    ],
+    "icons": {
+      "16": "16.png",
+      "48": "48.png",
+      "128": "128.png"
+    }
+  }
